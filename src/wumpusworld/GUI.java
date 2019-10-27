@@ -1,9 +1,11 @@
 package wumpusworld;
 
 import javax.swing.*;
+
 import java.awt.event.*;
 import java.awt.*;
 import java.io.File;
+import java.util.HashMap;
 import java.util.Vector;
 
 /**
@@ -19,10 +21,11 @@ public class GUI implements ActionListener
     private JLabel score;
     private JLabel status;
     private World w;
-    private Agent agent;
+    private MyAgent agent;
     private JPanel[][] blocks;
     private JComboBox mapList;
     private Vector<WorldMap> maps;
+    private WumpusWorld ww;
     
     private ImageIcon l_breeze;
     private ImageIcon l_stench;
@@ -37,8 +40,9 @@ public class GUI implements ActionListener
     /**
      * Creates and start the GUI.
      */
-    public GUI()
+    public GUI(WumpusWorld ww)
     {
+    	this.ww = ww;
         if (!checkResources())
         {
             JOptionPane.showMessageDialog(null, "Unable to start GUI. Missing icons.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -176,6 +180,14 @@ public class GUI implements ActionListener
         bs.setActionCommand("SHOOT");
         bs.addActionListener(this);
         buttons.add(bs);
+        JButton btrain = new JButton("Run Training");
+        btrain.setActionCommand("TRAINING");
+        btrain.addActionListener(this);
+        buttons.add(btrain);
+        JButton bsim = new JButton("Run Solving Simulation");
+        bsim.setActionCommand("SIMULATION");
+        bsim.addActionListener(this);
+        buttons.add(bsim);
         JButton ba = new JButton("Run Solving Agent");
         ba.setActionCommand("AGENT");
         ba.addActionListener(this);
@@ -267,6 +279,40 @@ public class GUI implements ActionListener
                 agent = new MyAgent(w);
             }
             agent.doAction();
+            updateGame();
+        }
+        if (e.getActionCommand().equals("TRAINING"))
+        {
+            HashMap<MyAgent.State, double[]> qTable = MyAgent.readQTable();
+            
+            int COUNT = 100000;
+            MapReader mr = new MapReader();
+            Vector<WorldMap> maps_list = mr.readMaps();
+            final int C = COUNT / maps_list.size();
+            
+            double totScore = 0;
+            for (int k = 0; k < C; k++)
+            {
+                for (int i = 0; i < maps_list.size(); i++)
+                {
+                    World w_local = maps_list.get(i).generateWorld();
+                    totScore += (double)this.ww.runSimulation(k * maps_list.size() + i, w_local, qTable);
+                }
+            }
+            totScore = totScore / ((double)maps_list.size() * C);
+            System.out.println("Average score: " + totScore);
+            
+            MyAgent.saveQTable(qTable);
+        }
+        
+        if (e.getActionCommand().equals("SIMULATION"))
+        {
+            if (agent == null)
+            {
+                agent = new MyAgent(w);
+            }
+            HashMap<MyAgent.State, double[]> qTable = MyAgent.readQTable();
+            this.ww.runSimulation(1, w, qTable);
             updateGame();
         }
     }

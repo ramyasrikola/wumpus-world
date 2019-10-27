@@ -382,24 +382,51 @@ public class World
         }
     }
     
-    public World cloneWorld()
+    @Override
+    public World clone()
     {
-        //this.size = size;
-        String[][] w1 = new String[size+1][size+1];
-        int px,py,dirr;
-        px=pX;
-        py=pY;
-        dirr=dir;
+        World copy = new World(size);
+        
+        copy.size = size;
+        
         for (int x = 0; x <= size; x++)
         {
             for (int y = 0; y <= size; y++)
             {
-                w1[x][y]= w[x][y];
+                copy.w[x][y] = "" + w[x][y];
             }
         }
         
-        return new World(w1,size,px,py,dirr);
+        copy.pX = pX;
+        copy.pY = pY;
+        copy.wumpusAlive = wumpusAlive;
+        copy.hasArrow = hasArrow;
+        copy.isInPit = isInPit;
+        copy.hasGold = hasGold;
+        copy.gameOver = gameOver;
+        copy.score = score;
+                
+        return copy;
     }
+    
+//    public World cloneWorld()
+//    {
+//        //this.size = size;
+//        String[][] w1 = new String[size+1][size+1];
+//        int px,py,dirr;
+//        px=pX;
+//        py=pY;
+//        dirr=dir;
+//        for (int x = 0; x <= size; x++)
+//        {
+//            for (int y = 0; y <= size; y++)
+//            {
+//                w1[x][y]= w[x][y];
+//            }
+//        }
+//        
+//        return new World(w1,size,px,py,dirr);
+//    }
     
     /**
      * Adds a pit to a square.

@@ -1,6 +1,8 @@
 package wumpusworld;
 
+import java.util.HashMap;
 import java.util.Vector;
+
 /**
  * Starting class for the Wumpus World program. The program
  * has three options: 1) Run a GUI where the Wumpus World can be
@@ -47,7 +49,7 @@ public class WumpusWorld {
      */
     private void showGUI()
     {
-        GUI g = new GUI();
+        GUI g = new GUI(this);
     }
     
     /**
@@ -56,17 +58,7 @@ public class WumpusWorld {
      */
     private void runSimulatorDB()
     {
-        MapReader mr = new MapReader();
-        Vector<WorldMap> maps = mr.readMaps();
-        
-        double totScore = 0;
-        for (int i = 0; i < maps.size(); i++)
-        {
-            World w = maps.get(i).generateWorld();
-            totScore += (double)runSimulation(w);
-        }
-        totScore = totScore / (double)maps.size();
-        System.out.println("Average score: " + totScore);
+        // Blank
     }
     
     /**
@@ -75,14 +67,7 @@ public class WumpusWorld {
      */
     private void runSimulator()
     {
-        double totScore = 0;
-        for (int i = 0; i < 10; i++)
-        {
-            WorldMap w = MapGenerator.getRandomMap(i);
-            totScore += (double)runSimulation(w.generateWorld());
-        }
-        totScore = totScore / (double)10;
-        System.out.println("Average score: " + totScore);
+        // Blank
     }
     
     /**
@@ -92,17 +77,17 @@ public class WumpusWorld {
      * @param w Wumpus World
      * @return Achieved score
      */
-    private int runSimulation(World w)
+    public int runSimulation(int index, World w, HashMap<MyAgent.State, double[]> qTable)
     {
         int actions = 0;
-        Agent a = new MyAgent(w);
-        while (!w.gameOver())
+        MyAgent a = new MyAgent(w, qTable);
+        while (!w.gameOver() && actions <= 1000)
         {
             a.doAction();
             actions++;
         }
         int score = w.getScore();
-        System.out.println("Simulation ended after " + actions + " actions. Score " + score);
+        System.out.println("Simulation " + index + " ended after " + actions + " actions. Score " + score);
         return score;
     }
 }
