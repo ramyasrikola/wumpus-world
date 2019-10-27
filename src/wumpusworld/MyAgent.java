@@ -100,26 +100,26 @@ public class MyAgent {
         
 		public void loadStateFromWorld(World w) {
 			
-	        int x = w.getPlayerX(); 
-	        int y = w.getPlayerY();
+	        int currentX = w.getPlayerX(); 
+	        int currentY = w.getPlayerY();
 
 	        this.direction = (byte) w.getDirection();
-	        if (w.hasBreeze(x, y))
+	        if (w.hasBreeze(currentX, currentY))
 	            this.percepts = PERCEPT.BREEZY.getID();
-	        if (w.hasStench(x, y))
+	        if (w.hasStench(currentX, currentY))
 	            this.percepts += PERCEPT.STENCH.getID() << 4;
 	        this.has_arrow = w.hasArrow();
 	        this.wumpus_alive = w.wumpusAlive();
 	        
-	        if (w.hasPit(x, y))
+	        if (w.hasPit(currentX, currentY))
 	            this.type = TILE_TYPE.PIT.getID();
-	        if (w.hasWumpus(x, y))
+	        if (w.hasWumpus(currentX, currentY))
 	            this.type += TILE_TYPE.WUMPUS.getID() << 4;
 	        
-	        // Check type and hazards of neighbours.
+	        // Explore the immediate neighbour tiles and store their percepts
 	        for (int i = 0; i < 4; ++i) {
-	            int nx = x + N_OFFSETS[i][0];
-	            int ny = y + N_OFFSETS[i][1];
+	            int nx = currentX + N_OFFSETS[i][0];
+	            int ny = currentY + N_OFFSETS[i][1];
 	            
 	            if (w.isValidPosition(nx, ny)) {
 	                if (!w.isUnknown(nx, ny)) {
@@ -142,24 +142,24 @@ public class MyAgent {
 	                this.neighbour_type[i] = TILE_TYPE.WALL.getID();
 	            }
 	        }
-	        
-	        // Check percepts in our neighbours' neighbours.
+
+            // Explore the neighbour's neighbour tiles(excluding the current tile) and store their percepts
 	        for (int i = 0; i < 8; ++i) {
-	            int nx = x + EN_OFFSETS[i][0];
-	            int ny = y + EN_OFFSETS[i][1];
+	            int nn_X = currentX + EN_OFFSETS[i][0];
+	            int nn_Y = currentY + EN_OFFSETS[i][1];
 	            
-	            if (w.isValidPosition(nx, ny)) {
-	                if (!w.isUnknown(nx, ny)) {
+	            if (w.isValidPosition(nn_X, nn_Y)) {
+	                if (!w.isUnknown(nn_X, nn_Y)) {
 	                    this.n2n_type[i] = TILE_TYPE.NORMAL.getID();
 	                    
-	                    if (w.hasPit(nx, ny))
+	                    if (w.hasPit(nn_X, nn_Y))
 	                        this.n2n_type[i] += TILE_TYPE.PIT.getID() << 4;
-	                    if (w.hasWumpus(nx, ny))
+	                    if (w.hasWumpus(nn_X, nn_Y))
 	                        this.n2n_type[i] += TILE_TYPE.WUMPUS.getID() << 5;
 	                    
-	                    if (w.hasBreeze(nx, ny))
+	                    if (w.hasBreeze(nn_X, nn_Y))
 	                        this.n2n_percepts[i] = PERCEPT.BREEZY.getID();
-	                    if (w.hasStench(nx, ny))
+	                    if (w.hasStench(nn_X, nn_Y))
 	                        this.n2n_percepts[i] += PERCEPT.STENCH.getID() << 4;
 	                } else {
 	                    this.n2n_type[i] = TILE_TYPE.UNEXPLORED.getID();
@@ -216,11 +216,12 @@ public class MyAgent {
         this.Q = Q;
         writeQOnGameEnd = false;
     }
-    
+
+    //check for the default actions before performing optimal actions
     public void checkDefaultActions(int x, int y) {
-    	if (w.hasGlitter(x, y)) {
+    	if (w.hasGlitter(x, y)) { //check for glitter in the tile; grab gold if found
             w.doAction(World.A_GRAB);
-        } else if (w.hasPit(x, y)) {
+        } else if (w.hasPit(x, y)) { //check for pit in the tile; climb up if found
             w.doAction(World.A_CLIMB);
         }
     }
@@ -228,7 +229,7 @@ public class MyAgent {
     
     public void doAction() {
         
-        // Check the world first if the game is over then return
+        // Check the world; if the game is over then dont perform any action
         if (w.gameOver())
         {
             return;
@@ -236,11 +237,11 @@ public class MyAgent {
         
         int currentX = w.getPlayerX();
         int currentY = w.getPlayerY();
-        
+
+        //check for the default actions before performing optimal actions
         checkDefaultActions(currentX, currentY);
-        
-        // Find the best action to do in our current state.
-       
+
+        //create a new state and load the current instance of the world
         State s1 = new State();
         s1.loadStateFromWorld(w);
 
@@ -259,10 +260,10 @@ public class MyAgent {
         w.doAction(ACTION.getActionFromId(best_action));
 
         
-        int nextX = w.getPlayerX();
-        int nextY = w.getPlayerY();
+        int cX_next = w.getPlayerX();
+        int cY_next = w.getPlayerY();
         
-        checkDefaultActions(nextX, nextY);
+        checkDefaultActions(cX_next, cY_next);
 
         // after making the action, find out if we are rewarded in the new state.
         State s2 = new State();
@@ -277,13 +278,13 @@ public class MyAgent {
         Q.put(s2,possible_actions2);
         
         
-        // Calculate the new Q-value for the taken action.
+        // update the q-value for the all the possible actions in the current state
         double max = Double.NEGATIVE_INFINITY;
         for (int a2 = 0; a2 < possible_actions2.length; ++a2)
             max = Math.max(max, possible_actions2[a2]);
         possible_actions[best_action] = possible_actions[best_action] + ALPHA * (reward + GAMMA * max - possible_actions[best_action]);
-        
-        // If the game has ended, write the Q matrix to file.
+
+        //check if game over after the performed action and write the q table
         if (w.gameOver())
         {
             if (writeQOnGameEnd)
@@ -292,6 +293,7 @@ public class MyAgent {
         
     }
     
+    //select the optimal action using exploration and exploitation trade off
     private int mostOptimalAction(double[] qValues) {
         ArrayList<Integer> optimal = new ArrayList<>();
         
