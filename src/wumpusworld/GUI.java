@@ -26,6 +26,7 @@ public class GUI implements ActionListener
     private JComboBox mapList;
     private Vector<WorldMap> maps;
     private WumpusWorld ww;
+    private HashMap<MyAgent.State, double[]> Q;
     
     private ImageIcon l_breeze;
     private ImageIcon l_stench;
@@ -283,9 +284,9 @@ public class GUI implements ActionListener
         }
         if (e.getActionCommand().equals("TRAINING"))
         {
-            HashMap<MyAgent.State, double[]> qTable = MyAgent.readQTable();
+            HashMap<MyAgent.State, double[]> qTable = new HashMap<MyAgent.State, double[]>();
             
-            int COUNT = 100000;
+            int COUNT = 100000; //100000
             MapReader mr = new MapReader();
             Vector<WorldMap> maps_list = mr.readMaps();
             final int C = COUNT / maps_list.size();
@@ -302,7 +303,8 @@ public class GUI implements ActionListener
             totScore = totScore / ((double)maps_list.size() * C);
             System.out.println("Average score: " + totScore);
             
-            MyAgent.saveQTable(qTable);
+            this.Q = qTable;
+            
         }
         
         if (e.getActionCommand().equals("SIMULATION"))
@@ -311,7 +313,7 @@ public class GUI implements ActionListener
             {
                 agent = new MyAgent(w);
             }
-            HashMap<MyAgent.State, double[]> qTable = MyAgent.readQTable();
+            HashMap<MyAgent.State, double[]> qTable = this.Q;
             this.ww.runSimulation(1, w, qTable);
             updateGame();
         }

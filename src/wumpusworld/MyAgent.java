@@ -1,27 +1,24 @@
 package wumpusworld;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Random;
 import static wumpusworld.Constants.*;
 
 public class MyAgent {
-    private static final String Q_FILE_PATH = "Q.dat";
+    //private static final String Q_FILE_PATH = "Q.dat";
     
     private static final int TOTAL_ACTIONS = 4;
     private World previous_world;
 
+    private World w;
+    private HashMap<State, double[]> Q;
+    public HashMap<State, double[]> getQ() {
+        return Q;
+    }
 	public enum ACTION {
 		FORWARD(0, World.A_MOVE), TURN_LEFT(1, World.A_TURN_LEFT), TURN_RIGHT(2, World.A_TURN_RIGHT),
 		SHOOT(3, World.A_SHOOT);
@@ -201,20 +198,16 @@ public class MyAgent {
         }
     }
     
-    private World w;
-    private HashMap<State, double[]> Q;
-    private boolean writeQOnGameEnd;
+    
     
     public MyAgent(World world) {
         w = world;
-        Q = readQTable();
-        writeQOnGameEnd = false;
+        this.Q = new HashMap<State, double[]>();
     }
     
     public MyAgent(World world, HashMap<State, double[]> Q) {
         w = world;
         this.Q = Q;
-        writeQOnGameEnd = false;
     }
 
     //check for the default actions before performing optimal actions
@@ -248,8 +241,8 @@ public class MyAgent {
         double[] possible_actions;
 
         //lookup the Q table for actions posible for given loaded state
-        possible_actions = (Q.containsKey(s1)) ?  Q.get(s1) : new double[TOTAL_ACTIONS] ;
-        Q.put(s1,possible_actions);
+        possible_actions = (this.Q.containsKey(s1)) ?  this.Q.get(s1) : new double[TOTAL_ACTIONS] ;
+        this.Q.put(s1,possible_actions);
 
         int best_action = mostOptimalAction(possible_actions);
 
@@ -274,8 +267,8 @@ public class MyAgent {
         double[] possible_actions2;
         
         //lookup the Q table for actions posible for given loaded state
-        possible_actions2 = (Q.containsKey(s2)) ?  Q.get(s2) : new double[TOTAL_ACTIONS] ;
-        Q.put(s2,possible_actions2);
+        possible_actions2 = (this.Q.containsKey(s2)) ?  this.Q.get(s2) : new double[TOTAL_ACTIONS] ;
+        this.Q.put(s2,possible_actions2);
         
         
         // update the q-value for the all the possible actions in the current state
@@ -284,12 +277,7 @@ public class MyAgent {
             max = Math.max(max, possible_actions2[a2]);
         possible_actions[best_action] = possible_actions[best_action] + ALPHA * (reward + GAMMA * max - possible_actions[best_action]);
 
-        //check if game over after the performed action and write the q table
-        if (w.gameOver())
-        {
-            if (writeQOnGameEnd)
-                saveQTable(Q);
-        }
+        
         
     }
     
@@ -317,7 +305,8 @@ public class MyAgent {
         else
             return random.nextInt(qValues.length);
     }
-    
+   
+
     private double getReward( int action) {
         
         //loads the cloned world before best_action performed
@@ -356,9 +345,9 @@ public class MyAgent {
         return 0.0;
     }
 
-    public static HashMap<State, double[]> readQTable() {
+   /* public static HashMap<State, double[]> readQTable() {
         HashMap<State, double[]> Q = new HashMap<>();
-        
+
         int states = 0;
         try (ObjectInputStream fis = new ObjectInputStream(new FileInputStream(new File(Q_FILE_PATH)))) {
             while (true) {
@@ -399,5 +388,5 @@ public class MyAgent {
         } catch (IOException ex) {
             System.err.println("Failed to write Q-Matrix to " + Q_FILE_PATH);
         }
-    }
+    }*/
 }
