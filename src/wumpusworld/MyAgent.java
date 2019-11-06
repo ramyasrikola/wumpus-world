@@ -1,5 +1,12 @@
 package wumpusworld;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,9 +14,10 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.Random;
 import static wumpusworld.Constants.*;
+import java.util.Map.Entry;
 
 public class MyAgent {
-    //private static final String Q_FILE_PATH = "Q.dat";
+    private static final String Q_FILE_PATH = "Q.dat";
     
     private static final int TOTAL_ACTIONS = 4;
     private World previous_world;
@@ -345,7 +353,7 @@ public class MyAgent {
         return 0.0;
     }
 
-   /* public static HashMap<State, double[]> readQTable() {
+    public static HashMap<State, double[]> readQTable() {
         HashMap<State, double[]> Q = new HashMap<>();
 
         int states = 0;
@@ -388,5 +396,5 @@ public class MyAgent {
         } catch (IOException ex) {
             System.err.println("Failed to write Q-Matrix to " + Q_FILE_PATH);
         }
-    }*/
+    }
 }

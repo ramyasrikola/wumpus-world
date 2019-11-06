@@ -37,6 +37,7 @@ public class GUI implements ActionListener
     private ImageIcon l_player_down;
     private ImageIcon l_player_left;
     private ImageIcon l_player_right;
+    private HashMap<MyAgent.State, double[]> qTable = MyAgent.readQTable();
     
     /**
      * Creates and start the GUI.
@@ -275,18 +276,19 @@ public class GUI implements ActionListener
         }
         if (e.getActionCommand().equals("AGENT"))
         {
+            
             if (agent == null)
             {
-                agent = new MyAgent(w);
+                agent = new MyAgent(w,qTable);
             }
             agent.doAction();
             updateGame();
         }
         if (e.getActionCommand().equals("TRAINING"))
         {
-            HashMap<MyAgent.State, double[]> qTable = new HashMap<MyAgent.State, double[]>();
+            //HashMap<MyAgent.State, double[]> qTable = MyAgent.readQTable();
             
-            int COUNT = 100000; //100000
+            int COUNT = 100000;
             MapReader mr = new MapReader();
             Vector<WorldMap> maps_list = mr.readMaps();
             final int C = COUNT / maps_list.size();
@@ -303,8 +305,7 @@ public class GUI implements ActionListener
             totScore = totScore / ((double)maps_list.size() * C);
             System.out.println("Average score: " + totScore);
             
-            this.Q = qTable;
-            
+            MyAgent.saveQTable(qTable);
         }
         
         if (e.getActionCommand().equals("SIMULATION"))
@@ -313,7 +314,6 @@ public class GUI implements ActionListener
             {
                 agent = new MyAgent(w);
             }
-            HashMap<MyAgent.State, double[]> qTable = this.Q;
             this.ww.runSimulation(1, w, qTable);
             updateGame();
         }
